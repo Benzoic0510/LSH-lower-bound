@@ -1,0 +1,430 @@
+\documentclass[10pt,twocolumn]{ctexart}
+
+\usepackage[a4paper,margin=1.8cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[hidelinks]{hyperref}
+\usepackage{enumitem}
+
+\newtheorem{definition}{定义}
+\newtheorem{theorem}{定理}
+\newtheorem{proposition}{命题}
+\newtheorem{lemma}{引理}
+\newtheorem{corollary}{推论}
+\newtheorem{remark}{注}
+
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0pt}
+\setlist[itemize]{leftmargin=2em}
+\pagestyle{plain}
+
+\title{局部敏感哈希的下界}
+\author{
+Rajeev Motwani\thanks{受 NSF Grant ITR-0331640 资助。}\\
+斯坦福大学\\
+Stanford, CA 94305-9045\\
+\texttt{rajeev@cs.stanford.edu}
+\and
+Assaf Naor\\
+微软研究院\\
+Redmond WA, 98052-6399\\
+\texttt{anaor@microsoft.com}
+\and
+Rina Panigrahy\thanks{受 NSF Grant ITR-0331640 和 Stanford Graduate Fellowship 资助。}\\
+斯坦福大学\\
+Stanford, CA 94305-9045\\
+\texttt{rinap@cs.stanford.edu}
+}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+给定一个度量空间 $(X,d_X)$，$c\ge 1$，$r>0$，以及 $p,q\in[0,1]$，若一个映射分布 $H:X\to\mathbb{N}$ 满足：$X$ 中任意两个距离至多为 $r$ 的点被 $H$ 映到同一个值的概率至少为 $p$，并且任意两个距离大于 $cr$ 的点被 $H$ 映到同一个值的概率至多为 $q$，则称其为一个 $(r,cr,p,q)$-敏感哈希族。这个概念由 Indyk 和 Motwani 于 1998 年提出，作为一种高效近似最近邻搜索算法的基础，此后已经为这一目的被广泛使用。这些算法的性能由参数
+\[
+\rho=\frac{\log(1/p)}{\log(1/q)}
+\]
+控制，并且构造具有小 $\rho$ 的哈希族会自动产生改进的最近邻算法。这里我们证明，对于 $X=\ell_1$，不可能达到 $\rho\le \frac{1}{2c}$。这几乎匹配 Indyk 和 Motwani 的构造，该构造达到 $\rho\le \frac{1}{c}$。
+\end{abstract}
+
+\noindent\textbf{类别与主题描述}
+
+G.3 [概率与统计]：概率算法；E.1 [数据结构]：杂项
+
+\medskip
+\noindent\textbf{一般术语}
+
+算法，理论
+
+\medskip
+\noindent\textbf{关键词}
+
+最近邻搜索，局部敏感哈希，下界
+
+\section{引言}
+
+在这篇短文中，我们研究使用局部敏感哈希（Locality Sensitive Hashing, LSH）在某些高维空间中寻找查询点的最近邻的复杂度。最近邻问题表述如下：给定度量空间中的一个包含 $n$ 个点的数据库，对它进行预处理，使得给定一个新的查询点时，可以快速找到数据集中离它最近的点。这个基础问题出现在大量应用中，包括数据挖掘、信息检索以及图像搜索，在这些应用中，对象的有区分性的特征被表示为 $\mathbb{R}^d$ 中的点。关于这个主题有大量文献，我们在此不试图讨论它。关于最近邻问题的背景，我们把感兴趣的读者引向论文 \cite{IM98,HP01,DIM04,Pan06}，尤其是这些论文中的参考文献。
+
+虽然精确最近邻问题看起来遭受“维数灾难”的影响，但已经设计出了许多高效技术来寻找近似解，其到查询点的距离至多为最近邻距离的 $c$ 倍。近似最近邻搜索中最通用且高效的方法之一基于局部敏感哈希，这是由 Indyk 和 Motwani 于 1998 年在 \cite{IM98} 中引入的。这个方法已经在若干论文中被精炼和改进，最新的算法可以在 \cite{DIM04} 中找到。我们还把读者引向 LSH 网站，在那里可以找到关于这个算法的更多信息，包括其实现和代码；所有这些可以在 \url{http://web.mit.edu/andoni/www/LSH/index.html} 找到。
+
+近似最近邻问题的 LSH 方法基于如下概念。
+
+\begin{definition}
+设 $(X,d_X)$ 是一个度量空间，$r,R>0$ 且 $p,q\in[0,1]$。若一个映射分布 $H:X\to\mathbb{N}$ 满足对于任意 $x,y\in X$，
+\[
+d_X(x,y)\le r \Rightarrow \Pr_H[H(x)=H(y)]\ge p,
+\]
+\[
+d_X(x,y)>R \Rightarrow \Pr_H[H(x)=H(y)]\le q,
+\]
+则称其为一个 $(r,R,p,q)$-敏感哈希族。
+\end{definition}
+
+给定 $c\ge 1$ 和 $q\in(0,1)$，我们定义 $\rho_X(c,q)$ 为最小的常数 $\rho>0$，使得对每个 $r>0$，存在 $p\in(0,1)$ 和一个 $(r,cr,p,q)$-敏感哈希族 $H:X\to\mathbb{N}$，且
+\[
+\frac{\log(1/p)}{\log(1/q)}\le \rho.
+\]
+换句话说，
+\begin{equation}
+\begin{aligned}
+\rho_X(c,q)=\sup_{r>0}\inf\{&
+\frac{\log(1/p)}{\log(1/q)}:\ \exists\ H:X\to\mathbb{N}\\
+&\text{为 }(r,cr,p,q)\text{-敏感哈希族}\}.
+\end{aligned}
+\end{equation}
+
+特别令人感兴趣的是 $X=\ell_s^d$ 的情形，其中 $s>0$ 且 $d\in\mathbb{N}$。这里以及下文中，$\ell_s^d$ 表示赋有 $\ell_s$ 范数的空间 $\mathbb{R}^d$，
+\[
+\|(x_1,\ldots,x_d)\|_s=(|x_1|^s+\cdots+|x_d|^s)^{1/s}
+\]
+（当 $0<s<1$ 时这只是一个拟范数）。在这种情况下我们定义
+\[
+\rho_s(c)=\sup_{0<q<1}\limsup_{d\to\infty}\rho_{\ell_s^d}(c,q).
+\]
+
+这些参数的重要性来自下述对近似最近邻搜索的应用。为了方便，我们将在 $c$-近似最近邻问题的如下判定版本框架中讨论它：给定一个查询点，在存在一个数据点到该查询点的距离至多为 $r$ 的前提下，找出数据集中任意一个到它距离至多为 $cr$ 的元素。这个判定版本被称为 $(r,cr)$-近邻问题。众所周知，归约到判定版本只会在时间和空间复杂度中增加一个对数因子 \cite{IM98,HP01}。下述定理在 \cite{IM98} 中得到证明；这里给出的精确表述取自 \cite{DIM04}。
+
+\begin{theorem}
+设 $(X,d_X)$ 是 $\mathbb{R}^d$ 的一个子集上的度量。假设 $(X,d_X)$ 允许一个 $(r,cr,p,q)$-敏感哈希族 $\mathcal{H}$，并记
+\[
+\rho=\frac{\log(1/p)}{\log(1/q)}.
+\]
+则对任意 $n\ge 1/q$，存在一个用于 $X$ 的 $n$ 点子集上的 $(r,cr)$-近邻问题的随机算法，它使用
+\[
+O(dn+n^{1+\rho})
+\]
+空间，查询时间由 $O(n^\rho)$ 次距离计算和
+\[
+O\!\left(n^\rho\log_{1/q}n\right)
+\]
+次来自 $\mathcal{H}$ 的哈希函数求值所支配。
+\end{theorem}
+
+因此，获得关于 $\rho_X(c)$ 的界具有很大的算法意义。在 \cite{IM98} 中证明了 $\rho_1(c)\le 1/c$，并且对于小的 $c$ 值，即 $c\in[1,10]$，在 \cite{DIM04} 中证明了这个不等式是严格的。关于小 $c$ 时 $\rho_1(c)$ 的最佳已知估计的数值数据，我们参见 \cite{DIM04}。对于 $s=2$，Andoni 和 Indyk \cite{AI05} 的一个近期结果表明 $\rho_2(c)\le 1/c^2$，而对于一般的 $s\in(0,2]$，最佳已知界 \cite{DIM04} 为
+\[
+\rho_s(c)\le \max\{1/c,1/c^s\}.
+\]
+
+本文的主要目的，是得到关于 $\rho_1(c)$ 和 $\rho_2(c)$ 的下界，这些下界几乎匹配由 \cite{IM98,DIM04,AI05} 中的构造得到的界。我们的主要结果是：
+
+\begin{theorem}
+对每个 $c,s\ge 1$，
+\begin{equation}
+\rho_s(c)\ge
+\frac{e^{1/c^s}-1}{e^{1/c^s}+1}
+\ge
+\frac{e-1}{e+1}\cdot\frac{1}{c^s}
+\ge
+\frac{0.462}{c^s}.
+\end{equation}
+\end{theorem}
+
+(2) 中倒数第二个不等式来自函数 $t\mapsto \frac{e^t-1}{e^t+1}$ 在 $[0,\infty)$ 上的凹性。还要观察到，当 $c\to\infty$ 时，
+\[
+\frac{e^{1/c}-1}{e^{1/c}+1}\sim \frac{1}{2c}.
+\]
+精确确定 $\limsup_{c\to\infty} c\cdot\rho_1(c)$ 将会非常有趣；由于定理 1.3 和 \cite{IM98} 的结果，我们目前知道这个数位于区间 $[1/2,1]$ 中。
+
+\section{定理 1.2 的证明}
+
+定理 1.3 证明中的基本想法很简单。选择一个随机点 $x\in\{0,1\}^d$，并考虑立方体 $\{0,1\}^d$ 的随机子集 $A$，它由满足 $H(u)=H(x)$ 的点 $u$ 组成。定义 1.1 中的第二个条件迫使 $A$ 在期望意义下很小。但是，当 $A$ 很小时，我们可以从上方界定从 $A$ 中的随机点开始的随机游走在 $r$ 步之后最终落在 $A$ 中的概率。我们使用傅里叶分析论证得到这个上界，并且把它与定义 1.1 中的第一个条件结合，从而推出关于 $\rho_1(c)$ 的所需界。
+
+定理 1.3 来自下述结果：
+
+\begin{proposition}
+设 $\mathcal{H}$ 是 Hamming 立方体 $(\{0,1\}^d,\|\cdot\|_1)$ 上的一个 $(r,R,p,q)$-敏感哈希族。假设 $r$ 是奇整数且 $R<d/2$。则
+\[
+p\le
+\left(q+\exp\left(-\frac{1}{d}\left(\frac{d}{2}-R\right)^2\right)\right)^{
+\frac{e^{2r/d}-1}{e^{2r/d}+1}
+}.
+\]
+\end{proposition}
+
+在命题 2.1 中选择 $R\approx d/2-\sqrt{d\log d}$ 且 $r\approx R/c$，并令 $d\to\infty$，得到 $s=1$ 情形的定理 1.3。一般的 $s\ge 1$ 情形来自如下事实：对 $x,y\in\{0,1\}^d$，
+\[
+\|x-y\|_s=\|x-y\|_1^{1/s}.
+\]
+
+\begin{remark}
+命题 2.1 对 $(\{0,1\}^d,\|\cdot\|_1)$ 上任意 $(r,cr,p,q)$-敏感哈希族的 $\frac{\log(1/p)}{\log(1/q)}$ 给出了一个非平凡下界，即便允许 $q$ 依赖于 $d$ 也是如此。注意，按照 (1) 中给出的定义，定理 1.3 只对常数 $q$ 蕴含这样的下界。但是，命题 2.1 强得多，并且对每个 $q\ge 2^{-o(d)}$ 蕴含一个渐近上与 1.3 中的下界一致的界。
+\end{remark}
+
+命题 2.1 的证明将被分解为几个引理。
+
+\begin{lemma}
+设 $\mathcal{H}$ 是 Hamming 立方体 $(\{0,1\}^d,\|\cdot\|_1)$ 上的一个 $(r,R,p,q)$-敏感哈希族，并固定 $x\in\{0,1\}^d$。则
+\[
+\mathbb{E}\left|H^{-1}(H(x))\right|
+\le
+\sum_{k=0}^{\lfloor R\rfloor}\binom{d}{k}
+q\cdot
+\sum_{k=\lfloor R\rfloor+1}^{d}\binom{d}{k}.
+\]
+\end{lemma}
+
+\begin{proof}
+我们简单地写成
+\[
+\begin{aligned}
+\mathbb{E}\left|H^{-1}(H(x))\right|
+&=\sum_{u\in\{0,1\}^d}\Pr[H(u)=H(x)]\\
+&\le
+\left|\{u\in\{0,1\}^d:\|u-x\|_1\le R\}\right|\\
+&\quad+
+q\cdot
+\left|\{u\in\{0,1\}^d:\|u-x\|_1>R\}\right|\\
+&=
+\sum_{k=0}^{\lfloor R\rfloor}\binom{d}{k}
+q\cdot
+\sum_{k=\lfloor R\rfloor+1}^{d}\binom{d}{k},
+\end{aligned}
+\]
+这就是所需的不等式。
+\end{proof}
+
+\begin{corollary}
+假设 $R<d/2$。则使用引理 2.2 的记号，我们有
+\[
+\mathbb{E}\frac{\left|H^{-1}(H(x))\right|}{2^d}
+\le
+q+\exp\left(-\frac{1}{d}\left(\frac{d}{2}-R\right)^2\right).
+\]
+\end{corollary}
+
+\begin{proof}
+这来自引理 2.2 和标准估计
+\[
+\sum_{k\le d/2-a}\binom{d}{k}\le 2^d\cdot e^{-a^2/d}.
+\]
+\end{proof}
+
+\begin{lemma}[随机游走引理]
+设 $r$ 是一个奇整数。给定 $\emptyset\ne B\subseteq\{0,1\}^d$，考虑如下定义的随机变量 $Q_B\in\{0,1\}^d$：均匀随机地选择一个点 $z\in B$，并从 $z$ 开始在 Hamming 立方体上执行 $r$ 步标准随机游走。如此得到的点记为 $Q_B$。则
+\[
+\Pr[Q_B\in B]\le
+\left(\frac{|B|}{2^d}\right)^{
+\frac{e^{2r/d}-1}{e^{2r/d}+1}
+}.
+\]
+\end{lemma}
+
+\begin{proof}
+我们首先回忆 Hamming 立方体上傅里叶分析的一些背景和记号。给定 $S\subseteq\{1,\ldots,d\}$，Walsh 函数 $W_S:\{0,1\}^d\to\{-1,1\}$ 定义为
+\[
+W_S(u)=(-1)^{\sum_{j\in S}u_j}.
+\]
+对于 $f:\{0,1\}^d\to\mathbb{R}$，我们令
+\[
+\widehat f(S)=\frac{1}{2^d}\sum_{u\in\{0,1\}^d}f(u)W_S(u),
+\]
+于是 $f$ 可以分解如下：
+\[
+f=\sum_{S\subseteq\{1,\ldots,d\}}\widehat f(S)W_S.
+\]
+对每个 $f,g:\{0,1\}^d\to\mathbb{R}$，我们写
+\[
+\langle f,g\rangle=\frac{1}{2^d}\sum_{u\in\{0,1\}^d}f(u)g(u).
+\]
+由 Parseval 恒等式，
+\[
+\langle f,g\rangle
+=
+\sum_{S\subseteq\{1,\ldots,d\}}\widehat f(S)\widehat g(S).
+\]
+对 $\varepsilon\in[0,1]$，Bonami-Beckner 算子 $T_\varepsilon$ 定义为
+\[
+T_\varepsilon f=
+\sum_{S\subseteq\{1,\ldots,d\}}\varepsilon^{|S|}\widehat f(S)W_S.
+\]
+Bonami-Beckner 不等式 \cite{Bon70,Bec75} 说明，对于每个 $f:\{0,1\}^d\to\mathbb{R}$，
+\[
+\begin{aligned}
+\sum_{S\subseteq\{1,\ldots,d\}}\varepsilon^{2|S|}\widehat f(S)^2
+&=\|T_\varepsilon f\|_2^2\\
+&=\frac{1}{2^d}\sum_{u\in\{0,1\}^d}(T_\varepsilon f(u))^2\\
+&\le \|f\|_{1+\varepsilon^2}^2\\
+&=\left\{\frac{1}{2^d}
+\sum_{u\in\{0,1\}^d}|f(u)|^{1+\varepsilon^2}
+\right\}^{\frac{2}{1+\varepsilon^2}}.
+\end{aligned}
+\]
+专门取 $B\subseteq\{0,1\}^d$ 的示性函数，我们得到
+\begin{equation}
+\sum_{S\subseteq\{1,\ldots,d\}}\varepsilon^{2|S|}
+\widehat{\mathbf{1}_B}(S)^2
+\le
+\left(\frac{|B|}{2^d}\right)^{\frac{2}{1+\varepsilon^2}}.
+\end{equation}
+
+现在，设 $P$ 为 $\{0,1\}^d$ 上标准随机游走的转移矩阵，也就是说，如果 $u$ 和 $v$ 恰好在一个坐标上不同，则 $P_{uv}=1/d$，否则 $P_{uv}=0$。通过直接计算我们有，对每个 $S\subseteq\{1,\ldots,d\}$，
+\[
+P W_S=\left(1-\frac{2|S|}{d}\right)W_S,
+\]
+也就是说 $W_S$ 是 $P$ 的一个特征向量，其特征值为 $1-\frac{2|S|}{d}$。从 $B$ 中随机点开始的随机游走在 $r$ 步后最终落在 $B$ 中的概率等于
+\[
+\begin{aligned}
+\Pr[Q_B\in B]
+&=\frac{1}{|B|}\sum_{a,b\in B}(P^r)_{ab}\\
+&=\frac{2^d}{|B|}\langle P^r\mathbf{1}_B,\mathbf{1}_B\rangle\\
+&=\frac{2^d}{|B|}
+\sum_{S\subseteq\{1,\ldots,d\}}
+\widehat{\mathbf{1}_B}(S)^2
+\left(1-\frac{2|S|}{d}\right)^r\\
+&\le
+\frac{2^d}{|B|}
+\sum_{\substack{S\subseteq\{1,\ldots,d\}\\ |S|\le d/2}}
+\widehat{\mathbf{1}_B}(S)^2
+\left(1-\frac{2|S|}{d}\right)^r,
+\end{aligned}
+\]
+其中我们使用了 $r$ 为奇数这一事实（即我们丢弃了负项）。
+
+因此，使用 (3)，我们看到
+\[
+\begin{aligned}
+\frac{|B|}{2^d}\Pr[Q_B\in B]
+&\le
+\sum_{S\subseteq\{1,\ldots,d\}}
+\widehat{\mathbf{1}_B}(S)^2e^{-2r|S|/d}\\
+&\le
+\left(\frac{|B|}{2^d}\right)^{
+\frac{2}{1+e^{-2r/d}}
+}.
+\end{aligned}
+\]
+于是
+\[
+\Pr[Q_B\in B]
+\le
+\left(\frac{|B|}{2^d}\right)^{
+\frac{1-e^{-2r/d}}{1+e^{-2r/d}}
+}
+=
+\left(\frac{|B|}{2^d}\right)^{
+\frac{e^{2r/d}-1}{e^{2r/d}+1}
+},
+\]
+这完成了引理 2.4 的证明。
+\end{proof}
+
+\begin{proof}[命题 2.1 的证明]
+假设 $r$ 是奇整数且 $R<d/2$，并记
+\[
+\alpha=\frac{e^{2r/d}-1}{e^{2r/d}+1},
+\qquad
+\beta=q+\exp\left[-\frac{(d/2-R)^2}{d}\right].
+\]
+对 $x\in\{0,1\}^d$，令 $W_r(x)\in\{0,1\}^d$ 为从 $x$ 开始执行 $r$ 步随机游走得到的随机点。由于 $\|x-W_r(x)\|_1\le r$，我们知道
+\[
+\Pr[H(W_r(x))=H(x)]\ge p.
+\]
+关于 $\{0,1\}^d$ 上的均匀概率测度取期望，我们推出
+\[
+\begin{aligned}
+p
+&\le
+\mathbb{E}_{x\in\{0,1\}^d}
+\Pr[H(W_r(x))=H(x)]\\
+&=
+\mathbb{E}_{H}\Pr\left[
+\begin{array}{c}
+x\in\{0,1\}^d:\\
+W_r(x)\in H^{-1}(H(x))
+\end{array}
+\right]\\
+&=
+\mathbb{E}_{H}\sum_{k\in\mathbb{N}}
+\Pr\left[
+\begin{array}{c}
+x\in\{0,1\}^d:\\
+W_r(x)\in H^{-1}(H(x)),\ H(x)=k
+\end{array}
+\right]\\
+&=
+\mathbb{E}_{H}\sum_{k\in\mathbb{N}}
+\frac{|H^{-1}(k)|}{2^d}
+\Pr\left[Q_{H^{-1}(k)}\in H^{-1}(k)\right]\\
+&\le
+\mathbb{E}_{H}\sum_{k\in\mathbb{N}}
+\frac{|H^{-1}(k)|}{2^d}
+\left(\frac{|H^{-1}(k)|}{2^d}\right)^\alpha\\
+&=
+\mathbb{E}_{H}\mathbb{E}_{x\in\{0,1\}^d}
+\left(\frac{|H^{-1}(H(x))|}{2^d}\right)^\alpha\\
+&\le
+\mathbb{E}_{x\in\{0,1\}^d}
+\left(\mathbb{E}_{H}
+\frac{|H^{-1}(H(x))|}{2^d}
+\right)^\alpha\\
+&\le
+\beta^\alpha,
+\end{aligned}
+\]
+其中第五行使用了引理 2.4，倒数第二行使用了 Jensen 不等式，最后一行使用了推论 2.3。
+\end{proof}
+
+\section{致谢}
+
+我们感谢 Piotr Indyk 和 Jirka Matou\v{s}ek 提出的有益建议。
+
+\begin{thebibliography}{7}
+
+\bibitem{AI05}
+A. Andoni and P. Indyk.
+高维最近邻问题的更快算法。
+手稿，2005。
+
+\bibitem{Bec75}
+W. Beckner.
+傅里叶分析中的不等式。
+\emph{Ann. of Math. (2)}, 102(1):159--182, 1975。
+
+\bibitem{Bon70}
+A. Bonami.
+\emph{Étude des coefficients de Fourier des fonctions de $L^p(G)$}.
+\emph{Ann. Inst. Fourier (Grenoble)}, 20(fasc. 2):335--402 (1971), 1970。
+
+\bibitem{DIM04}
+M. Datar, N. Immorlica, P. Indyk, and V. S. Mirrokni.
+基于 $p$-稳定分布的局部敏感哈希方案。
+见 \emph{SCG '04: Proceedings of the Twentieth Annual Symposium on Computational Geometry} (Brooklyn, NY, 2004)，第 253--262 页。ACM Press, New York, NY, 2004。
+
+\bibitem{HP01}
+S. Har-Peled.
+近线性大小 Voronoi 图的替代物。
+见 \emph{42nd IEEE Symposium on Foundations of Computer Science} (Las Vegas, NV, 2001)，第 94--103 页。IEEE Computer Soc., Los Alamitos, CA, 2001。
+
+\bibitem{IM98}
+P. Indyk and R. Motwani.
+近似最近邻：迈向消除维数灾难。
+见 \emph{STOC '98: Proceedings of the Thirtieth Annual ACM Symposium on Theory of Computing} (Dallas, TX, 1998)，第 604--613 页。ACM Press, New York, NY, 1998。
+
+\bibitem{Pan06}
+R. Panigrahy.
+高维中的基于熵的最近邻搜索。
+见 \emph{SODA '06: Proceedings of the Seventeenth Annual ACM-SIAM Symposium on Discrete Algorithms} (Miami, FL, 2006)，第 1186--1195 页。ACM Press, New York, NY, 2006。
+
+\end{thebibliography}
+
+\end{document}
