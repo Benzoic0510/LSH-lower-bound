@@ -368,3 +368,486 @@ $$
 \Rightarrow
 \text{随机游走后还留在桶里的概率越小}
 $$
+
+## 8. 随机游走引理为什么成立
+
+这一部分使用了 Hamming 立方体上的 Fourier 分析。
+
+主要工具包括：
+
+1. Walsh 函数；
+2. Fourier 展开；
+3. Parseval 恒等式；
+4. Bonami-Beckner 不等式；
+5. 随机游走转移矩阵的特征值分析。
+
+证明核心逻辑如下。
+
+对集合 $$B$$ 的示性函数：
+
+$$
+1_B
+$$
+
+进行 Fourier 展开：
+
+$$
+1_B
+=
+\sum_{S\subseteq {1,\dots,d}}
+\widehat{1_B}(S)W_S
+$$
+
+随机游走转移矩阵 $$P$$ 作用在 Walsh 函数上时，有：
+
+$$
+PW_S
+=
+\left(
+1-\frac{2|S|}{d}
+\right)W_S
+$$
+所以 $$W_S$$ 是随机游走矩阵 $$P$$ 的特征向量，特征值为：
+$$
+1-\frac{2|S|}{d}
+$$
+经过 $$r$$ 步随机游走后，对应特征值变成：
+$$
+\left(
+1-\frac{2|S|}{d}
+\right)^r
+$$
+于是随机游走从 $$B$$ 出发后仍落在 $$B$$ 中的概率，可以写成 Fourier 系数的加权和。
+
+最后利用 Bonami-Beckner 不等式控制这些 Fourier 系数，得到：
+$$
+\Pr[Q_B\in B]
+\le
+\left(
+\frac{|B|}{2^d}
+\right)^{
+\frac{e^{2r/d}-1}{e^{2r/d}+1}
+}
+$$
+## 9. 为什么要求 $$r$$ 是奇整数
+
+在随机游走引理中，作者要求：
+$$
+r\text{ 是奇整数}
+$$
+原因出现在特征值项：
+$$
+\left(
+1-\frac{2|S|}{d}
+\right)^r
+$$
+当：
+$$
+|S|>\frac d2
+$$
+时，
+$$
+1-\frac{2|S|}{d}<0
+$$
+如果 $$r$$ 是奇数，那么：
+$$
+\left(
+1-\frac{2|S|}{d}
+\right)^r<0
+$$
+这些项是负项。
+
+在证明上界时，可以直接丢弃这些负项，因为去掉负项只会让整体变大，从而得到一个合法的上界。
+
+所以 $$r$$ 是奇整数这个条件主要是为了方便处理 Fourier 展开中的负特征值项。
+
+## 10. 命题 2.1 的证明
+
+定义：
+
+$$
+\alpha
+=
+\frac{e^{2r/d}-1}{e^{2r/d}+1}
+$$
+
+以及：
+
+$$
+\beta
+=
+q+
+\exp\left(
+-\frac{(d/2-R)^2}{d}
+\right)
+$$
+
+对任意：
+$$
+x\in{0,1}^d
+$$
+令：
+$$
+W_r(x)
+$$
+表示从 $$x$$ 出发进行 $$r$$ 步随机游走后得到的点。
+
+由于每一步只翻转一个坐标，所以 $$r$$ 步之后：
+$$
+|x-W_r(x)|_1\le r
+$$
+由 LSH 的近点条件可知：
+$$
+\Pr[H(W_r(x))=H(x)]\ge p
+$$
+对所有 $$x$$ 取平均：
+$$
+p
+\le
+\mathbb{E}_x
+\Pr[H(W_r(x))=H(x)]
+$$
+接下来按哈希桶分解。设哈希值为 $$k$$ 的桶是：
+
+$$
+H^{-1}(k)
+$$
+若：
+$$
+x\in H^{-1}(k)
+$$
+那么事件：
+$$
+H(W_r(x))=H(x)
+$$
+等价于：
+$$
+W_r(x)\in H^{-1}(k)
+$$
+即随机游走后仍然留在原桶中。
+
+于是可以对每一个桶使用随机游走引理：
+$$
+\Pr[Q_{H^{-1}(k)}\in H^{-1}(k)]
+\le
+\left(
+\frac{|H^{-1}(k)|}{2^d}
+\right)^\alpha
+$$
+因此：
+$$
+p
+\le
+\mathbb{E}_H
+\mathbb{E}_x
+\left(
+\frac{|H^{-1}(H(x))|}{2^d}
+\right)^\alpha
+$$
+由于：
+$$
+0<\alpha<1
+$$
+函数：
+$$
+t^\alpha
+$$
+是凹函数。
+
+使用 Jensen 不等式：
+$$
+\mathbb{E}_H
+\left(
+\frac{|H^{-1}(H(x))|}{2^d}
+\right)^\alpha
+\le
+\left(
+\mathbb{E}_H
+\frac{|H^{-1}(H(x))|}{2^d}
+\right)^\alpha
+$$
+再由推论 2.3：
+$$
+\mathbb{E}_H
+\frac{|H^{-1}(H(x))|}{2^d}
+\le
+\beta
+$$
+所以：
+$$
+p
+\le
+\beta^\alpha
+$$
+即：
+$$
+p
+\le
+\left(
+q+
+\exp\left(
+-\frac{1}{d}
+\left(
+\frac d2-R
+\right)^2
+\right)
+\right)^{
+\frac{e^{2r/d}-1}{e^{2r/d}+1}
+}
+$$
+这正是命题 2.1。
+
+## 11. 从命题 2.1 推出 $$\ell_1$$ 情形
+
+命题 2.1 给出：
+$$
+p
+\le
+\left(
+q+
+\exp\left(
+-\frac{1}{d}
+\left(
+\frac d2-R
+\right)^2
+\right)
+\right)^{
+\frac{e^{2r/d}-1}{e^{2r/d}+1}
+}
+$$
+为了得到主定理，作者选择：
+$$
+R\approx \frac d2-\sqrt{d\log d}
+$$
+于是：
+$$
+\frac d2-R
+\approx
+\sqrt{d\log d}
+$$
+所以：
+
+$$
+\exp\left( -\frac{1}{d} \left( \frac d2-R \right)^2 \right) \approx \exp(-\log d)
+=
+\frac 1d
+$$
+
+当：
+$$
+d\to\infty
+$$
+时，
+$$
+\frac 1d\to 0
+$$
+因此：
+$$
+q+
+\exp\left(
+-\frac{1}{d}
+\left(
+\frac d2-R
+\right)^2
+\right)
+\to q
+$$
+又选择：
+$$
+r\approx \frac{R}{c}
+$$
+由于：
+$$
+R\approx \frac d2
+$$
+所以：
+$$
+\frac{2r}{d}
+\approx
+\frac{1}{c}
+$$
+于是：
+$$
+\frac{e^{2r/d}-1}{e^{2r/d}+1}
+\to
+\frac{e^{1/c}-1}{e^{1/c}+1}
+$$
+命题 2.1 在极限下变成：
+$$
+p
+\le
+q^{
+\frac{e^{1/c}-1}{e^{1/c}+1}
+}
+$$
+两边取对数：
+$$
+\log p
+\le
+\frac{e^{1/c}-1}{e^{1/c}+1}\log q
+$$
+因为 $$0<p,q<1$$，所以：
+$$
+\log p<0,\quad \log q<0
+$$
+等价地写成：
+$$
+\log(1/p)
+\ge
+\frac{e^{1/c}-1}{e^{1/c}+1}
+\log(1/q)
+$$
+因此：
+$$
+\frac{\log(1/p)}{\log(1/q)}
+\ge
+\frac{e^{1/c}-1}{e^{1/c}+1}
+$$
+也就是：
+$$
+\rho_1(c)
+\ge
+\frac{e^{1/c}-1}{e^{1/c}+1}
+$$
+这证明了 $$\ell_1$$ 情形。
+
+## 12. 从 $$\ell_1$$ 推广到 $$\ell_s$$
+
+对于：
+$$
+x,y\in{0,1}^d
+$$
+如果它们有 $$m$$ 个坐标不同，那么：
+
+$$
+|x-y|_1=m
+$$
+
+而在 $$\ell_s$$ 距离下：
+
+$$
+m^{1/s}
+$$
+所以：
+$$
+|x-y|_1^{1/s}
+$$
+
+等价地：
+$$
+|x-y|_s^s
+$$
+因此，在 $$\ell_s$$ 中距离放大 $$c$$ 倍，对应到 Hamming 距离中就是放大：
+$$
+c^s
+$$
+所以把 $$\ell_1$$ 情形中的 $$c$$ 换成 $$c^s$$，得到：
+$$
+\rho_s(c)
+\ge
+\frac{e^{1/c^s}-1}{e^{1/c^s}+1}
+$$
+这就是主定理。
+
+## 13. 本节证明链条总结
+
+整节证明可以概括为以下逻辑链：
+$$
+\text{LSH 远点条件}
+\\
+\Downarrow
+\\
+\text{哈希桶平均密度很小}
+\\
+\Downarrow
+\\
+\text{随机游走后仍留在桶内的概率很小}
+\\
+\Downarrow
+\\
+\text{但 LSH 近点条件要求该概率至少为}p
+\\
+\Downarrow
+\\
+p\text{ 不能太大}
+\\
+\Downarrow
+\\
+\frac{\log(1/p)}{\log(1/q)}
+\text{ 不能太小}
+\\
+\Downarrow
+\\
+\rho_s(c)
+\ge
+\frac{e^{1/c^s}-1}{e^{1/c^s}+1}
+$$
+## 14. 核心公式汇总
+
+**哈希桶期望大小**
+$$
+\mathbb{E}|H^{-1}(H(x))|
+\le
+\sum_{k=0}^{\lfloor R\rfloor}
+\binom dk
++
+q
+\sum_{k=\lfloor R\rfloor+1}^{d}
+\binom dk
+$$
+
+**归一化桶密度上界**
+$$
+\mathbb{E}
+\frac{|H^{-1}(H(x))|}{2^d}
+\le
+q+
+\exp\left(
+-\frac{1}{d}
+\left(
+\frac d2-R
+\right)^2
+\right)
+$$
+
+**随机游走引理**
+$$
+\Pr[Q_B\in B]
+\le
+\left(
+\frac{|B|}{2^d}
+\right)^{
+\frac{e^{2r/d}-1}{e^{2r/d}+1}
+}
+$$
+
+**命题 2.1**
+$$
+p
+\le
+\left(
+q+
+\exp\left(
+-\frac{1}{d}
+\left(
+\frac d2-R
+\right)^2
+\right)
+\right)^{
+\frac{e^{2r/d}-1}{e^{2r/d}+1}
+}
+$$
+
+**$$\ell_1$$ 下界**
+$$
+\rho_1(c)
+\ge
+\frac{e^{1/c}-1}{e^{1/c}+1}
+$$
+
+**$$\ell_s$$下界**
+$$
+\rho_s(c)
+\ge
+\frac{e^{1/c^s}-1}{e^{1/c^s}+1}
+$$
