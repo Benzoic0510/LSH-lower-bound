@@ -1,0 +1,294 @@
+\documentclass[UTF8,11pt,a4paper]{ctexart}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!60!black,
+  citecolor=blue!60!black,
+  urlcolor=blue!60!black
+}
+
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0.4em}
+\setlist[itemize]{leftmargin=2em}
+\setlist[enumerate]{leftmargin=2em}
+\setcounter{tocdepth}{1}
+
+\newtheorem{definition}{定义}
+\newtheorem{proposition}{命题}
+\newtheorem{theorem}{定理}
+
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Prb}{\operatorname{Pr}}
+\newcommand{\E}{\mathbb{E}}
+
+\title{\Huge\textbf{Lower Bounds on Locality Sensitive Hashing Review}\\[0.5em]}
+\author{241880622\quad 蒲今}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\vspace{-1.2em}
+\begingroup
+\small
+\setlength{\parskip}{0pt}
+\tableofcontents
+\endgroup
+\newpage
+
+\section{论文概述}
+
+本文 review 的论文是 Motwani、Naor 和 Panigrahy 在 SoCG 2006 发表的
+\emph{Lower Bounds on Locality Sensitive Hashing}。这篇论文研究局部敏感哈希
+（Locality Sensitive Hashing, LSH）在高维近似最近邻问题中的理论下界。LSH 的基本思想是：
+让距离近的点更容易哈希到同一个桶，让距离远的点不容易哈希到同一个桶。它是处理高维近似最近邻搜索的经典方法。
+
+这篇论文的主要贡献不是提出新的 LSH 构造，而是证明 LSH 本身存在性能极限。作者用参数
+\[
+  \rho=\frac{\log(1/p)}{\log(1/q)}
+\]
+刻画 LSH 的效率，其中 $p$ 是近点碰撞概率的下界，$q$ 是远点碰撞概率的上界。$\rho$ 越小，
+对应的查询复杂度越低。论文证明，在高维 $\ell_s$ 空间中，任意 LSH 方法都必须满足
+\[
+  \rho_s(c)
+  \ge
+  \frac{e^{1/c^s}-1}{e^{1/c^s}+1}
+  \ge
+  \frac{0.462}{c^s}.
+\]
+也就是说，LSH 的复杂度指数不可能低于 $\Omega(1/c^s)$。这个下界与已有 LSH 上界在量级上基本匹配，
+说明已有算法在 LSH 模型内已经接近最优。
+
+论文的证明从 Hamming 立方体 $\{0,1\}^d$ 入手。作者把哈希碰撞理解为点落入同一个哈希桶：
+远点低碰撞说明桶不能太大，近点高碰撞又要求随机游走后的近邻点仍有较大概率留在同一桶中。
+由于 Hamming 立方体上的随机游走会快速扩散，小桶很难同时满足这两个要求。这个冲突最终给出了 $\rho$ 的下界。
+
+\section{该论文解决了什么问题}
+
+近似最近邻问题要求：给定一个预处理后的点集 $P$，对于查询点 $q$，快速找到一个点
+$x\in P$，使得
+\[
+  d(q,x)\le c\cdot \min_{y\in P} d(q,y),
+\]
+其中 $c>1$ 是近似因子。当 $c=1$ 时是精确最近邻；当 $c>1$ 时，算法允许返回一个足够接近最优答案的点。
+在高维空间中，精确最近邻通常很难高效解决，因此近似最近邻成为更实际的研究对象。
+
+LSH 是近似最近邻的经典方法，但它的能力边界并不显然。根据 Indyk 和 Motwani 的 LSH 框架，
+如果存在好的 $(r,cr,p,q)$-sensitive 哈希族，就可以得到查询时间大约为 $n^\rho$ 的算法，其中
+\[
+  \rho=\frac{\log(1/p)}{\log(1/q)}
+\]
+由近点碰撞概率 $p$ 和远点碰撞概率 $q$ 决定。因此，$\rho$ 越小，LSH 查询越快。已有构造说明在
+$\ell_1$ 空间中可以达到大约 $1/c$ 的量级，在 $\ell_2$ 空间中可以达到大约 $1/c^2$ 的量级；
+但这些只是上界，只说明“可以做到这么好”，并不说明“不能更好”。
+
+这篇论文解决的正是这个最优性问题：在高维 $\ell_s$ 空间中，是否存在某种未知的 LSH 哈希族，
+能让 $\rho$ 远小于已有构造？论文的回答是否定的。它证明所有满足 LSH 定义的哈希方法都受到统一限制：
+在该模型内，$\rho$ 不能低于 $\Omega(1/c^s)$。因此，本文把“是否还有更好的 LSH”这个问题，
+从对具体算法的比较变成了对整个 LSH 模型的下界证明。
+
+\section{为什么这个问题重要}
+
+高维最近邻搜索是许多应用中的基础问题，例如相似文档检索、图像检索、推荐系统和机器学习中的向量搜索。
+在这些场景中，一个对象通常被表示成高维向量，系统需要在大量数据中快速找到与查询对象最相似的点。
+如果逐一比较所有点，查询代价会随数据规模线性增长，难以适应大规模数据。
+
+这个问题在高维空间中尤其困难。许多低维几何数据结构在维度升高后效果迅速变差，这就是所谓的维数灾难。
+因此，近似最近邻算法变得非常重要，而 LSH 是其中最有代表性的通用方法之一。
+
+本文的重要性在于，它说明 LSH 的瓶颈不是某个具体构造的缺陷，而是模型本身的限制。在标准 LSH 框架中，
+查询时间大致包含 $n^\rho$ 量级的距离计算，空间复杂度也会出现 $n^{1+\rho}$ 量级的项；
+因此 $\rho$ 的下界直接限制了 LSH 能带来的加速幅度。本文证明的 $\Omega(1/c^s)$ 下界与已有上界基本匹配，
+这说明在同一 LSH 模型内，继续寻找数量级更好的哈希族不会有太大空间。
+
+这种结论对后续研究也有指导意义：如果想显著突破已有性能，就可能需要使用更强的模型、数据依赖的方法，
+或者转向 LSH 之外的近似最近邻数据结构。
+
+\section{相关研究}
+
+\subsection{论文中提到的相关研究}
+
+\todo{介绍 Indyk 和 Motwani 的 LSH 框架，以及已有 LSH 构造给出的上界。}
+
+\todo{说明论文如何把自己的结果放在已有上界之后：已有算法能做到某个量级，而本文证明不能明显更好。}
+
+\subsection{论文未详细提到但相关的研究}
+
+\todo{补充其他近似最近邻数据结构、cell-probe 下界、度量空间嵌入等与该问题相关但论文没有重点展开的方向。}
+
+\subsection{论文发表后的后续研究}
+
+\todo{补充数据依赖 LSH、现代近似最近邻算法、向量数据库或更强模型中的 ANN 下界等后续工作。}
+
+\section{论文提出了什么技术}
+
+\subsection{LSH 的基本形式}
+
+设 $(X,d_X)$ 是一个度量空间。随机哈希函数族 $H:X\to\N$ 称为
+$(r,R,p,q)$-sensitive，如果对任意 $x,y\in X$，有
+\[
+  d_X(x,y)\le r
+  \Rightarrow
+  \Prb_H[H(x)=H(y)]\ge p,
+\]
+并且
+\[
+  d_X(x,y)>R
+  \Rightarrow
+  \Prb_H[H(x)=H(y)]\le q.
+\]
+在近似最近邻问题中通常令 $R=cr$，并用
+\[
+  \rho=\frac{\log(1/p)}{\log(1/q)}
+\]
+衡量 LSH 的效率。
+
+\subsection{论文的核心技术路线}
+
+论文没有直接分析整个高维 $\ell_s^d$ 空间，而是先分析它的一个特殊子集：
+\[
+  \{0,1\}^d.
+\]
+这个集合是 Hamming 立方体。在该集合上，两个点之间的 $\ell_1$ 距离等于它们不同坐标的个数。
+
+论文的关键技术是把 LSH 的碰撞概率条件转化为 Hamming 立方体上哈希桶的结构限制，再用随机游走分析哈希桶不可能同时满足“近点高碰撞”和“远点低碰撞”。
+
+\todo{补充：解释“哈希桶”“随机游走”“桶大小限制”分别对应证明中的哪一步。}
+
+\section{技术背后的直觉}
+
+可以把一个哈希值对应的所有点看成一个桶。若远点碰撞概率 $q$ 很小，那么一个桶不能包含太多彼此相距很远的点；否则随机选两个点时，它们同桶且相距较远的概率会过大，违反 LSH 的远点条件。
+
+另一方面，近点碰撞概率 $p$ 要求相近的点经常落入同一个桶。论文考虑从某个点出发，在 Hamming 立方体上随机走若干步。如果起点在某个桶中，且终点仍在这个桶中，那么这对应一种近点碰撞事件。随机游走的扩散性质说明：如果桶不大，随机游走很难长时间留在桶中。因此 $p$ 也不能太大。
+
+这就是证明的核心冲突：
+\[
+  \text{远点低碰撞要求桶不能太大}
+  \quad+\quad
+  \text{小桶难以困住随机游走}
+  \quad\Rightarrow\quad
+  \text{近点碰撞概率存在上限。}
+\]
+
+\todo{补充一个简单例子，说明为什么小集合在 Hamming 立方体上容易被随机游走走出去。}
+
+\section{技术的非凡之处与好处}
+
+这篇论文的巧妙之处在于，它没有逐个分析具体的 LSH 构造，而是从 LSH 定义本身出发，证明所有满足该定义的哈希族都受到同一个限制。这使得结论具有模型层面的普遍性。
+
+另一个优点是，论文把一个算法问题转化成了 Hamming 立方体上的几何和概率问题。通过哈希桶、随机游走和集合扩散性质，作者把“近点要高碰撞、远点要低碰撞”的直觉冲突变成了可量化的不等式。
+
+\todo{补充：为什么这种证明比只分析某个具体算法更强。}
+
+\section{技术是如何实现的}
+
+\subsection{第一步：限制哈希桶大小}
+
+固定一个哈希函数和一个点 $x\in\{0,1\}^d$，令
+\[
+  A=H^{-1}(H(x)).
+\]
+集合 $A$ 是与 $x$ 哈希到同一个值的所有点。远点碰撞概率小意味着：如果某些点与 $x$ 距离大于 $R$，它们落入同一个桶的概率不能超过 $q$。
+
+\todo{详细写出如何由远点条件推出桶大小或桶内远点比例的期望上界。}
+
+\subsection{第二步：用随机游走连接近点碰撞}
+
+在 Hamming 立方体上，从点 $x$ 出发随机翻转一个坐标，重复 $r$ 次。若 $r$ 为奇数，则起点和终点之间的 Hamming 距离不超过 $r$。因此，LSH 的近点条件给出：
+\[
+  \Prb[H(x)=H(y)]\ge p.
+\]
+也就是说，随机游走从桶 $A$ 出发后仍留在 $A$ 的概率至少受到 $p$ 的控制。
+
+\todo{补充论文中对随机游走步数、距离条件和碰撞概率之间关系的严格表述。}
+
+\subsection{第三步：用小集合扩散性质给出上界}
+
+Hamming 立方体上的随机游走具有扩散性：如果集合 $A$ 不够大，随机游走从 $A$ 中出发后仍留在 $A$ 中的概率不会太高。
+论文用这一性质得到核心命题：
+\[
+  p
+  \le
+  \left(
+    q+
+    \exp\left(
+      -\frac{1}{d}\left(\frac{d}{2}-R\right)^2
+    \right)
+  \right)^{
+    \frac{e^{2r/d}-1}{e^{2r/d}+1}
+  }.
+\]
+
+\todo{解释该式中每一项的含义，特别是 $q$、指数误差项和幂指数分别来自哪里。}
+
+\subsection{第四步：从 Hamming 立方体推广到 $\ell_s$ 空间}
+
+由于 $\{0,1\}^d$ 可以看作 $\ell_s^d$ 的子集，并且在 0-1 向量上距离满足
+\[
+  \|x-y\|_s = \|x-y\|_1^{1/s},
+\]
+Hamming 距离上的下界可以转化为 $\ell_s$ 空间中的下界。最终得到：
+\[
+  \rho_s(c)
+  \ge
+  \frac{e^{1/c^s}-1}{e^{1/c^s}+1}
+  \ge
+  \frac{0.462}{c^s}.
+\]
+
+\todo{补充参数替换过程，说明为什么近似因子从 Hamming 距离中的关系变成了 $c^s$。}
+
+\section{如何证明技术的正确性}
+
+证明正确性的关键是逐步确认每个转化都保持了 LSH 定义中的约束：
+
+\begin{enumerate}
+  \item 哈希桶分析没有改变哈希族本身，只是从碰撞事件 $H(x)=H(y)$ 的角度重新表达 LSH 条件；
+  \item 远点条件确实给出桶中远点数量或概率的限制；
+  \item 随机游走终点与起点距离不超过指定阈值，因此可以使用近点碰撞概率下界；
+  \item Hamming 立方体的小集合扩散性质给出随机游走留在同一集合内的上界；
+  \item 上下界比较后推出 $p$ 的上界，再代入 $\rho=\log(1/p)/\log(1/q)$ 得到 $\rho$ 的下界；
+  \item Hamming 立方体作为 $\ell_s^d$ 的子集，因此子空间上的困难性可以推出整个空间上的困难性。
+\end{enumerate}
+
+\todo{把上述每一点展开成正式证明，尤其要写清楚“为什么随机游走终点是近点”和“为什么子空间下界能推出整体空间下界”。}
+
+\section{如何证明技术的优越性}
+
+论文证明的不是某个具体算法优于另一个算法，而是证明已有 LSH 上界在量级上无法被显著改进。已有 LSH 构造给出了大约 $O(1/c^s)$ 量级的 $\rho$，而本文证明任何 LSH 都必须满足
+\[
+  \rho_s(c)=\Omega(1/c^s).
+\]
+因此，上界和下界在渐近量级上匹配。
+
+这种“优越性”体现在两个方面：第一，它说明已有算法已经接近最优，不需要再期待在同一 LSH 模型内得到数量级更好的 $\rho$；第二，它提供了一种评价未来算法的基准，如果想显著突破该限制，可能需要改变模型假设或使用 LSH 之外的方法。
+
+\todo{补充具体已有上界，与本文下界放在同一段比较，说明匹配到什么程度。}
+
+\section{总结}
+
+\todo{用自己的话总结：本文解决了什么问题，技术直觉是什么，证明为什么可信，以及这个下界结果对 LSH 研究有什么意义。}
+
+\begin{thebibliography}{9}
+
+\bibitem{mnp2006}
+R. Motwani, A. Naor, and R. Panigrahy.
+\newblock Lower Bounds on Locality Sensitive Hashing.
+\newblock \emph{Proceedings of the Twenty-second Annual Symposium on Computational Geometry}, 2006.
+
+\bibitem{im1998}
+P. Indyk and R. Motwani.
+\newblock Approximate Nearest Neighbors: Towards Removing the Curse of Dimensionality.
+\newblock \emph{Proceedings of STOC}, 1998.
+
+\end{thebibliography}
+
+\end{document}
