@@ -3,6 +3,7 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{amsmath,amssymb,amsthm,mathtools}
 \usepackage{enumitem}
+\usepackage{fancyhdr}
 \usepackage{hyperref}
 \usepackage{xcolor}
 
@@ -27,6 +28,19 @@
 \newcommand{\N}{\mathbb{N}}
 \newcommand{\Prb}{\operatorname{Pr}}
 \newcommand{\E}{\mathbb{E}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyfoot[C]{\thepage}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
 
 \title{\Huge\textbf{Lower Bounds on Locality Sensitive Hashing Review}\\[0.5em]}
 \author{241880622\quad 蒲今}
@@ -116,17 +130,38 @@ $\ell_1$ 空间中可以达到大约 $1/c$ 的量级，在 $\ell_2$ 空间中可
 
 \subsection{论文中提到的相关研究}
 
-\todo{介绍 Indyk 和 Motwani 的 LSH 框架，以及已有 LSH 构造给出的上界。}
+这篇论文最直接的背景是 Indyk 和 Motwani 在 1998 年提出的 LSH 框架 \cite{im1998}。这个框架把近似最近邻问题转化为构造合适的随机哈希族：
+如果近点以较高概率碰撞、远点以较低概率碰撞，就可以通过多次哈希和查桶来减少需要检查的候选点数量。
+因此，LSH 的核心不再只是设计一个数据结构，而是设计具有良好碰撞概率的哈希分布。
 
-\todo{说明论文如何把自己的结果放在已有上界之后：已有算法能做到某个量级，而本文证明不能明显更好。}
+在这条研究线上，已有工作给出了若干重要上界。Indyk 和 Motwani 的结果说明，在 $\ell_1$ 空间中可以达到
+$\rho_1(c)\le 1/c$。Datar、Immorlica、Indyk 和 Mirrokni 后来提出了基于 $p$-稳定分布的 LSH 方法 \cite{datar2004}，
+进一步系统地处理 $\ell_s$ 空间中的近似最近邻问题。Andoni 和 Indyk 的结果则给出了 $\ell_2$ 空间中
+$\rho_2(c)\le 1/c^2$ 的更强上界 \cite{andoni2005}。本文正是在这些上界之后提出问题：这些上界只是说明 LSH 可以做到这么好，
+但它们是否已经接近最优？
+
+本文的贡献就是给出与这些上界基本匹配的下界。尤其对于 $\ell_1$ 空间，已有上界是 $1/c$，本文证明下界为常数倍的
+$1/c$；对于 $\ell_2$ 空间，已有上界是 $1/c^2$，本文也证明了同量级的下界。因此，这篇论文不是替代前人的 LSH 构造，
+而是解释为什么这些构造在渐近量级上已经很难被显著改进。
 
 \subsection{论文未详细提到但相关的研究}
 
-\todo{补充其他近似最近邻数据结构、cell-probe 下界、度量空间嵌入等与该问题相关但论文没有重点展开的方向。}
+最近邻搜索本身有很长的研究历史，LSH 只是其中一种路线。另一类方法试图用几何数据结构直接划分空间，
+例如 Voronoi 图、树结构或空间分割方法。这些方法在低维空间中很有用，但在高维空间中常常受到维数灾难影响。
+因此，高维近似最近邻研究通常更关注随机化、近似化和高维概率结构。
+
+还有一些相关方向研究更强的计算模型下界，例如 cell-probe 模型中的数据结构下界。这类结果关心的是：
+即使允许非常灵活的数据结构，一个问题仍然需要多少空间或查询时间。本文的下界与此不同，它不是针对所有可能的数据结构，
+而是专门针对 LSH 这种“近点高碰撞、远点低碰撞”的方法。因此，本文结论的适用范围更窄，但也更精确地刻画了 LSH 框架本身的能力边界。
 
 \subsection{论文发表后的后续研究}
 
-\todo{补充数据依赖 LSH、现代近似最近邻算法、向量数据库或更强模型中的 ANN 下界等后续工作。}
+本文发表之后，近似最近邻和 LSH 仍然是活跃方向。一个重要发展是数据依赖的哈希方法：传统 LSH 的哈希族通常与具体数据集无关，
+而数据依赖方法允许根据输入数据选择或学习哈希结构，因此有可能突破某些数据无关 LSH 的限制。
+
+从应用角度看，近似最近邻搜索也成为现代向量检索和向量数据库的重要基础。实际系统中常常结合哈希、图搜索、量化和聚类等多种技术。
+这说明本文的下界并不意味着近似最近邻问题无法继续改进，而是提醒我们：如果仍然限制在标准 LSH 模型内，
+已有结果已经接近理论边界；若要得到更强性能，往往需要改变模型假设或使用其他类型的数据结构。
 
 \section{论文提出了什么技术}
 
@@ -149,7 +184,8 @@ $(r,R,p,q)$-sensitive，如果对任意 $x,y\in X$，有
 \[
   \rho=\frac{\log(1/p)}{\log(1/q)}
 \]
-衡量 LSH 的效率。
+衡量 LSH 的效率。这里 $p$ 越大，说明近点越容易被放到同一个桶中；$q$ 越小，说明远点越不容易误碰撞。
+因此，一个好的 LSH 需要同时做到“近点高碰撞”和“远点低碰撞”。本文的技术正是围绕这两个要求之间的矛盾展开。
 
 \subsection{论文的核心技术路线}
 
@@ -159,9 +195,39 @@ $(r,R,p,q)$-sensitive，如果对任意 $x,y\in X$，有
 \]
 这个集合是 Hamming 立方体。在该集合上，两个点之间的 $\ell_1$ 距离等于它们不同坐标的个数。
 
-论文的关键技术是把 LSH 的碰撞概率条件转化为 Hamming 立方体上哈希桶的结构限制，再用随机游走分析哈希桶不可能同时满足“近点高碰撞”和“远点低碰撞”。
+选择 Hamming 立方体的好处是，它既足够简单，又保留了高维空间的核心困难。立方体中每个点都是一个 0-1 向量，
+距离就是不同坐标的数量；同时，从一个点出发随机翻转坐标，就得到一个非常自然的随机游走过程。论文正是利用这个随机游走来刻画
+“从一个点移动到附近点”时哈希值是否仍然相同。
 
-\todo{补充：解释“哈希桶”“随机游走”“桶大小限制”分别对应证明中的哪一步。}
+更具体地说，论文把证明分成三层。
+
+第一层是哈希桶分析。固定一个点 $x$，所有与 $x$ 哈希到同一个值的点构成集合
+\[
+  A=H^{-1}(H(x)).
+\]
+这个集合就是 $x$ 所在的哈希桶。远点低碰撞条件说明：如果一个点离 $x$ 很远，它落入同一桶的概率至多是 $q$。
+因此，哈希桶不能在整个 Hamming 立方体中占据太大比例；否则远点之间同桶的概率会过高。
+
+第二层是随机游走分析。论文考虑从桶中的点出发，在 Hamming 立方体上随机走 $r$ 步。由于每一步只翻转一个坐标，
+终点与起点的 Hamming 距离不会超过 $r$。如果 $H$ 真的是一个好的 LSH，那么这些近点应当有较大概率仍然落在同一个桶中，
+也就是随机游走应当有较大概率从 $A$ 出发后仍回到 $A$。
+
+第三层是小集合扩散性质。Hamming 立方体上的随机游走会扩散：如果集合 $A$ 很小，那么从 $A$ 中出发的随机游走很难在若干步之后仍然停留在 $A$ 中。
+这与 LSH 要求的近点高碰撞形成冲突。论文通过傅里叶分析给出这一随机游走概率的上界，并把它与哈希桶大小的上界结合，得到核心不等式
+\[
+  p
+  \le
+  \left(
+    q+
+    \exp\left(
+      -\frac{1}{d}\left(\frac{d}{2}-R\right)^2
+    \right)
+  \right)^{
+    \frac{e^{2r/d}-1}{e^{2r/d}+1}
+  }.
+\]
+这个不等式说明，只要远点碰撞概率 $q$ 很小，近点碰撞概率 $p$ 也会被迫受到限制。
+最后再把 Hamming 立方体看作 $\ell_s^d$ 的子集，就可以把该下界推广到高维 $\ell_s$ 空间。
 
 \section{技术背后的直觉}
 
@@ -288,6 +354,16 @@ R. Motwani, A. Naor, and R. Panigrahy.
 P. Indyk and R. Motwani.
 \newblock Approximate Nearest Neighbors: Towards Removing the Curse of Dimensionality.
 \newblock \emph{Proceedings of STOC}, 1998.
+
+\bibitem{datar2004}
+M. Datar, N. Immorlica, P. Indyk, and V. S. Mirrokni.
+\newblock Locality-Sensitive Hashing Scheme Based on p-Stable Distributions.
+\newblock \emph{Proceedings of the Twentieth Annual Symposium on Computational Geometry}, 2004.
+
+\bibitem{andoni2005}
+A. Andoni and P. Indyk.
+\newblock Faster Algorithms for High-Dimensional Nearest Neighbor Search.
+\newblock Manuscript, 2005.
 
 \end{thebibliography}
 
