@@ -14,5 +14,9 @@ LSH-lower-bound/
 
 ## 交付清单
 
-暂无交付物
+- LSH-lower-bound Review.pdf
 
+## 成员贡献
+
+- 241880622 蒲今：阅读/写作
+- ChatGPT-5.6 Sol：翻译/润色
